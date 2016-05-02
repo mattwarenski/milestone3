@@ -16,8 +16,38 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-var til = [];
 
+
+/*
+
+
+WATCH MONDAY 18
+Then time = 36 Wed 21
+
+
+
+ */
+var util = {
+    store: function(namespace, data){
+        console.log("# arguments: " + arguments);
+        if(arguments.length > 1){
+            console.log("Storing Data" + JSON.stringify(data));
+            return localStorage.setItem(namespace, JSON.stringify(data));
+        }
+        else{
+            var store = localStorage.getItem(namespace);
+            if(store){
+                console.log("Data Retrieved" + store);
+                return JSON.parse(store);
+            }
+            else{
+                console.log("No data to retrieve");
+                return [];
+            }
+        }
+    }
+
+};
 var app = {
     // Application Constructor
     initialize: function() {
@@ -35,9 +65,23 @@ var app = {
     // The scope of 'this' is the event. In order to call the 'receivedEvent'
     // function, we must explicitly call 'app.receivedEvent(...);'
     onDeviceReady: function() {
-        //app.receivedEvent('deviceready');
+        app.loadTemplates();
+        app.til = util.store('til');
         app.render('container');
+        app.registerCallbacks();
 
+    },
+    loadTemplates: function(){
+        var templateText =app.templateString();
+        app.tilTemplate = new EJS({text: templateText});
+        var addFormText = app.getAddFormString();
+        app.addFormTemplate = new EJS({text: addFormText});
+    },
+    registerCallbacks: function(){
+        $("#tilForm").hide();
+        $("#addEntry").on("click", function(){
+           $("#tilForm").show();
+        });
         $("#submit").on("click", app.addEntry);
     },
     addEntry: function(evt){
@@ -47,27 +91,37 @@ var app = {
 
         var body = $("#body").val();
 
-        entry = {slug: slug, body: body};
-        til.push(entry);
+        var entry = {slug: slug, body: body};
+        if(slug === "" || body === ""){
+            return;
+        }
+        app.til.push(entry);
+        util.store('til', app.til);
         app.render('container');
+        $('#tilForm').hide();
+    },
+    templateString: function(){
+        return "<% for(var i = 0; i < til.length; i++){%> <div> <h1><%=til[i].slug%></h1> <p><%=til[i].body%></p> <button type=\"button\" data-id=\"<%=i%>\" class=\"delete\">Delete</button> </div><%}%>"
+    },
+    getAddFormString: function(){
+        return "<form id=\"tilForm\">Name: <input type=\"text\" id=\"slug\" class=\"entryBox\"></br>Text: <input type=\"text\" id=\"body\" class=\"entryBox\"></br></br><button type=\"submit\" id=\"submit\" class=\"subbutton\">Create</button></form>"
     },
     // Update DOM on a Received Event
    render: function(id) {
        var containerElement = document.getElementById(id);
+       var html = app.tilTemplate.render({til: app.til});
+       var addForm = app.addFormTemplate.render();
+       console.log("Add Form", addForm);
+       containerElement.innerHTML = addForm + html;
+       //$("#container").append(addForm);
 
-       var html = "";
-       for(var i =0; i < til.length; i++){
-           html += "<div></div><h1>" + til[i].slug + "</h1>";
-           html += "<p>" + til[i].body + "</p>";
-           html += '<button type="button" data-id="'+ i +'" class="delete">Delete</button></div>'
-       }
-       containerElement.innerHTML = html;
-
-       $(".delete").on("click", function(evt){
+       $(".delete").on("click", function(){
            var entryID = $(this).attr("data-id");
-           til.splice(entryID,1);
-           console.log("Delete"+ entryID);
+           app.til.splice(entryID,1);
+           util.store('til', app.til);
+
            app.render('container');
+           $("#tilForm").hide();
        });
         /*var parentElement = document.getElementById(id);
         var listeningElement = parentElement.querySelector('.listening');

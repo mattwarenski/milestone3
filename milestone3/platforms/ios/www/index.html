@@ -40,6 +40,9 @@
 
     <link rel="stylesheet" type="text/css" href="css/index.css" />
     <title>Today I Learned!</title>
+    <script type="text/template" id="til-entries">
+
+    </script>
 </head>
 
 <body>
@@ -47,19 +50,18 @@
 
     </div>
     <form id="tilForm">
-        Name:<input type="text" id="slug"></br>
-        Text:<input type="text" id="body"></br>
-        <button type="submit" id="submit">Create</button>
+        Name: <input type="text" id="slug" class="entryBox"></br>
+        Text: <input type="text" id="body" class="entryBox"></br></br>
+        <button type="submit" id="submit" class="subbutton">Create</button>
 
     </form>
     <script type="text/javascript" src="cordova.js"></script>
     <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/ejs.js"></script>
+
     <script type="text/javascript" src="js/index.js"></script>
 
-    <script type="text/javascript">
-        //app.initialize();
-        console.log("Stuff is getting logged");
-    </script>
+
 </body>
 
 </html>
