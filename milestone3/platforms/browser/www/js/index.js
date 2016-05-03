@@ -21,8 +21,6 @@
 /*
 
 
-WATCH MONDAY 18
-Then time = 36 Wed 21
 
 
 
@@ -67,26 +65,53 @@ var app = {
     onDeviceReady: function() {
         app.loadTemplates();
         app.til = util.store('til');
-        app.render('container');
+        app.render('container','til',{'til': app.til});
         app.registerCallbacks();
 
     },
     loadTemplates: function(){
-        var templateText =app.templateString();
-        app.tilTemplate = new EJS({text: templateText});
-        var addFormText = app.getAddFormString();
-        app.addFormTemplate = new EJS({text: addFormText});
+        var templates = ['til', 'addForm', 'til-entry'];
+        var templateText = "";
+        app.templates = {};
+
+        for(var i =0; i < templates.length; i++){
+            templateText = document.getElementById(templates[i]);
+            app.templates[templates[i]] = new EJS({text: templateText});
+        }
     },
     registerCallbacks: function(){
-        $("#tilForm").hide();
-        $("#addEntry").on("click", function(){
-           $("#tilForm").show();
+        $('body').on('click', 'a', function(evt){
+            console.log("a tag clicked");
+            evt.preventDefault();
+            history.pushState({},"",$(this).attr('href'));
+            app.route(location.pathname);
         });
-        $("#submit").on("click", app.addEntry);
+        $("#container").on('click', "#submitButton", app.addEntry);
+        $("#container").on('click', ".delete", app.deleteEntry);
+       
+    },
+    deleteEntry: function(){
+       var entryID = $(this).attr('data-id');
+       app.til.splice(entryID,1);
+       util.store('til', app.til);
+       app.render('container', 'til', {'til': app.til});
+    },
+    route: function(ref){
+        if(ref === '/add'){
+            app.render('container', 'addForm');
+
+        }
+        if(ref === '/entries'){
+            app.render('container', 'til', {'til': app.til});
+        }
+        if(/\/entries\/(\d*)/.test(ref)){
+            var id = parseInt(ref.match(/\/entries\/(\d*)/)[1]);
+            app.render('container', 'til-entry', {'til': app.til[id]});
+        }
     },
     addEntry: function(evt){
+        console.log("add entry called");
         evt.preventDefault();
-
         var slug = $("#slug").val();
 
         var body = $("#body").val();
@@ -97,40 +122,16 @@ var app = {
         }
         app.til.push(entry);
         util.store('til', app.til);
-        app.render('container');
         $('#tilForm').hide();
     },
-    templateString: function(){
-        return "<% for(var i = 0; i < til.length; i++){%> <div> <h1><%=til[i].slug%></h1> <p><%=til[i].body%></p> <button type=\"button\" data-id=\"<%=i%>\" class=\"delete\">Delete</button> </div><%}%>"
-    },
-    getAddFormString: function(){
-        return "<form id=\"tilForm\">Name: <input type=\"text\" id=\"slug\" class=\"entryBox\"></br>Text: <input type=\"text\" id=\"body\" class=\"entryBox\"></br></br><button type=\"submit\" id=\"submit\" class=\"subbutton\">Create</button></form>"
-    },
+
     // Update DOM on a Received Event
-   render: function(id) {
+   render: function(id, template, data) {
        var containerElement = document.getElementById(id);
-       var html = app.tilTemplate.render({til: app.til});
-       var addForm = app.addFormTemplate.render();
-       console.log("Add Form", addForm);
-       containerElement.innerHTML = addForm + html;
-       //$("#container").append(addForm);
 
-       $(".delete").on("click", function(){
-           var entryID = $(this).attr("data-id");
-           app.til.splice(entryID,1);
-           util.store('til', app.til);
-
-           app.render('container');
-           $("#tilForm").hide();
-       });
-        /*var parentElement = document.getElementById(id);
-        var listeningElement = parentElement.querySelector('.listening');
-        var receivedElement = parentElement.querySelector('.received');
-
-        listeningElement.setAttribute('style', 'display:none;');
-        receivedElement.setAttribute('style', 'display:block;');
-
-        console.log('Received Event: ' + id);*/
+       var html = app.templates[template].render(data);
+       containerElement.innerHTML = html;
+       
     }
 };
 
